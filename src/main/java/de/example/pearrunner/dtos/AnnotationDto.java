@@ -13,9 +13,9 @@ import lombok.Data;
 @Data
 public class AnnotationDto {
 
-    private int begin;
-    private int end;
-    private String coveredText;
-    private String additionalFeatures;
+	private int begin;
+	private int end;
+	private String coveredText;
+	private String additionalFeatures;
 
 }
