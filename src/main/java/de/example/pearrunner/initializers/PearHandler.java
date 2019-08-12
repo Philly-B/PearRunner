@@ -45,6 +45,13 @@ public class PearHandler {
 
 		this.setUpToRunNoCheckedExceptionShit();
 
+		PearHandler.log.info("Pipeline up and running");
+	}
+
+
+	public boolean isInitCompleted() {
+
+		return this.initSuccessful;
 	}
 
 

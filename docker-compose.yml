@@ -1,0 +1,13 @@
+version: "3.5"
+services:
+  pearExecutor:
+    image: pear-runner:0.0.1-SNAPSHOT
+    ports:
+        - "127.0.0.1:8090:8080"
+    deploy:
+      replicas: 1
+    healthcheck:
+      test: "curl -f http://localhost:8080/rest/health || false"
+      timeout: 10s
+      retries: 30
+

@@ -7,7 +7,10 @@ import java.util.Arrays;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.ResponseBody;
@@ -25,31 +28,45 @@ import de.example.pearrunner.service.AnalyzeService;
 @RestController
 public class Webservice {
 
-    @Autowired
-    private AnalyzeService analyzeService;
+	@Autowired
+	private AnalyzeService analyzeService;
 
-    @PostMapping(path = "/rest/analyze/analyzeText", consumes = "text/plain", produces = "application/json")
-    @ResponseBody
-    public WebServiceResponse analyseText(@RequestBody(required = true) String toAnalyse) {
 
-	List<AnnotationDto> result = analyzeService.analyseText(toAnalyse);
+	@GetMapping(path = "/rest/health", produces = "application/json")
+	@ResponseBody
+	public ResponseEntity<String> healthCheck() {
 
-	WebServiceResponse response = new WebServiceResponse();
-	response.setAnnotations(result);
+		if (this.analyzeService.healthy()) {
+			return new ResponseEntity<String>("Service up and running", HttpStatus.OK);
+		}
+		return new ResponseEntity<String>(HttpStatus.BAD_REQUEST);
 
-	return response;
-    }
+	}
 
-    @ExceptionHandler(RuntimeException.class)
-    public WebServiceResponse handlExceptions(RuntimeException e) {
 
-	WebServiceResponse response = new WebServiceResponse();
+	@PostMapping(path = "/rest/analyze/analyzeText", consumes = "text/plain", produces = "application/json")
+	@ResponseBody
+	public WebServiceResponse analyseText(@RequestBody(required = true) String toAnalyse) {
 
-	ErrorDto err = new ErrorDto();
-	err.setErrorMessage(e.getMessage());
-	response.setErrors(Arrays.asList(err));
+		List<AnnotationDto> result = this.analyzeService.analyseText(toAnalyse);
 
-	return response;
-    }
+		WebServiceResponse response = new WebServiceResponse();
+		response.setAnnotations(result);
+
+		return response;
+	}
+
+
+	@ExceptionHandler(RuntimeException.class)
+	public WebServiceResponse handlExceptions(RuntimeException e) {
+
+		WebServiceResponse response = new WebServiceResponse();
+
+		ErrorDto err = new ErrorDto();
+		err.setErrorMessage(e.getMessage());
+		response.setErrors(Arrays.asList(err));
+
+		return response;
+	}
 
 }

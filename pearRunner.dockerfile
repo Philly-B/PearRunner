@@ -2,7 +2,9 @@ FROM openjdk:8
 
 WORKDIR /
 
-RUN mkdir -p pearInstall pearDesc
+RUN mkdir -p pearInstall pearDesc \
+	&& apt-get update \
+	&& apt-get install curl
 
 COPY *.pear pearDesc/pearToExecute.pear
 
