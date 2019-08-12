@@ -18,6 +18,7 @@
 	<properties>
 		<java.version>1.8</java.version>
 		<maven-jar-plugin.version>3.1.1</maven-jar-plugin.version>
+		<dockerfile-maven-version>1.4.12</dockerfile-maven-version>
 		<uima-version>2.10.4</uima-version>
 		<uimafit-version>2.4.0</uimafit-version>
 	</properties>
@@ -29,7 +30,7 @@
 			<artifactId>uimaj-core</artifactId>
 			<version>${uima-version}</version>
 		</dependency>
-		
+
 		<dependency>
 			<groupId>org.apache.uima</groupId>
 			<artifactId>uimafit-core</artifactId>
@@ -60,6 +61,29 @@
 				<groupId>org.springframework.boot</groupId>
 				<artifactId>spring-boot-maven-plugin</artifactId>
 			</plugin>
+
+			<plugin>
+				<groupId>com.spotify</groupId>
+				<artifactId>dockerfile-maven-plugin</artifactId>
+				<version>${dockerfile-maven-version}</version>
+				<executions>
+					<execution>
+						<id>default</id>
+						<goals>
+							<goal>build</goal>
+						</goals>
+					</execution>
+				</executions>
+				<configuration>
+					<repository>pear-runner</repository>
+					<tag>${project.version}</tag>
+					<buildArgs>
+						<JAR_FILE>${project.build.finalName}.jar</JAR_FILE>
+					</buildArgs>
+					<dockerfile>pearRunner.dockerfile</dockerfile>
+				</configuration>
+			</plugin>
+
 		</plugins>
 	</build>
 
