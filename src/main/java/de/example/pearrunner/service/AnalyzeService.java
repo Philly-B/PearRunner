@@ -21,37 +21,35 @@ import de.example.pearrunner.util.ExtractorUtil;
 @Component
 public class AnalyzeService {
 
-	@Autowired
-	private CasPool casPool;
+    @Autowired
+    private CasPool casPool;
 
-	@Autowired
-	private ExtractorUtil extractorUtil;
+    @Autowired
+    private ExtractorUtil extractorUtil;
 
-	@Autowired
-	private PearHandler pearHandler;
+    @Autowired
+    private PearHandler pearHandler;
 
+    public boolean healthy() {
 
-	public boolean healthy() {
+	return this.pearHandler.isInitCompleted();
+    }
 
-		return this.pearHandler.isInitCompleted();
+    public List<AnnotationDto> analyseText(String text) {
+
+	JCas cas = this.casPool.getCas();
+
+	try {
+	    cas.setDocumentText(text);
+
+	    this.pearHandler.processCas(cas);
+
+	    return this.extractorUtil.extractAnnotations(cas);
+
+	} finally {
+	    this.casPool.returnCas(cas);
 	}
 
-
-	public List<AnnotationDto> analyseText(String text) {
-
-		JCas cas = this.casPool.getCas();
-
-		try {
-			cas.setDocumentText(text);
-
-			this.pearHandler.processCas(cas);
-
-			return this.extractorUtil.extractAnnotations(cas);
-
-		} finally {
-			this.casPool.returnCas(cas);
-		}
-
-	}
+    }
 
 }

@@ -24,58 +24,58 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class CasPool {
 
-	public static final int CAS_POOL_SIZE = 5;
-	public static final int MAX_WAIT_FOR_CAS_IN_SEK = 10;
+    public static final int CAS_POOL_SIZE = 5;
+    public static final int MAX_WAIT_FOR_CAS_IN_SEK = 10;
 
-	private BlockingQueue<JCas> casPool;
+    private BlockingQueue<JCas> casPool;
 
-	private PearHandler pearHandler;
+    private PearHandler pearHandler;
 
+    @Autowired
+    public CasPool(
+	    PearHandler pearHandler) {
 
-	@Autowired
-	public CasPool(PearHandler pearHandler) {
+	this.pearHandler = pearHandler;
+	this.casPool = new LinkedBlockingQueue<>(CasPool.CAS_POOL_SIZE);
 
-		this.pearHandler = pearHandler;
-		this.casPool = new LinkedBlockingQueue<>(CasPool.CAS_POOL_SIZE);
+    }
 
+    private void addCleanCasToPool(int indexOfCas) {
+
+	try {
+
+	    JCas newJCas = this.pearHandler.getAE()
+					   .getResourceManager()
+					   .getCasManager()
+					   .getCas(PearHandler.POOLISIOUS)
+					   .getJCas();
+
+	    this.casPool.add(newJCas);
+	} catch (CASException e) {
+	    CasPool.log.error("Could not create a cas", e);
+	    throw new RuntimeException(e);
 	}
+    }
 
+    public JCas getCas() {
 
-	private void addCleanCasToPool(int indexOfCas) {
-
-		try {
-
-			JCas newJCas = this.pearHandler.getAE().getResourceManager().getCasManager().getCas(PearHandler.POOLISIOUS).getJCas();
-
-			this.casPool.add(newJCas);
-		} catch (CASException e) {
-			CasPool.log.error("Could not create a cas", e);
-			throw new RuntimeException(e);
-		}
+	try {
+	    return this.casPool.poll(CasPool.MAX_WAIT_FOR_CAS_IN_SEK, TimeUnit.SECONDS);
+	} catch (InterruptedException e) {
+	    CasPool.log.error("Could not get a clean cas in " + CasPool.MAX_WAIT_FOR_CAS_IN_SEK + " sec", e);
+	    throw new RuntimeException(e);
 	}
+    }
 
+    public void returnCas(JCas returnToPool) {
 
-	public JCas getCas() {
+	returnToPool.reset();
+	this.casPool.add(returnToPool);
+    }
 
-		try {
-			return this.casPool.poll(CasPool.MAX_WAIT_FOR_CAS_IN_SEK, TimeUnit.SECONDS);
-		} catch (InterruptedException e) {
-			CasPool.log.error("Could not get a clean cas in " + CasPool.MAX_WAIT_FOR_CAS_IN_SEK + " sec", e);
-			throw new RuntimeException(e);
-		}
-	}
+    public void initPool() {
 
-
-	public void returnCas(JCas returnToPool) {
-
-		returnToPool.reset();
-		this.casPool.add(returnToPool);
-	}
-
-
-	public void initPool() {
-
-		IntStream.of(CasPool.CAS_POOL_SIZE).forEach(this::addCleanCasToPool);
-	}
+	IntStream.of(CasPool.CAS_POOL_SIZE).forEach(this::addCleanCasToPool);
+    }
 
 }

@@ -19,15 +19,14 @@ import lombok.Setter;
 @NoArgsConstructor
 public class AnnotationDto {
 
-	private int begin;
-	private int end;
-	private String coveredText;
-	private Map<String, Object> additionalFeatures = new HashMap<>();
+    private int begin;
+    private int end;
+    private String coveredText;
+    private Map<String, Object> additionalFeatures = new HashMap<>();
 
+    public void addAdditionalParameter(String featureName, Object featureValueObject) {
 
-	public void addAdditionalParameter(String featureName, Object featureValueObject) {
-
-		this.additionalFeatures.put(featureName, featureValueObject);
-	}
+	this.additionalFeatures.put(featureName, featureValueObject);
+    }
 
 }

@@ -29,95 +29,86 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class PearHandler {
 
-	public static final String POOLISIOUS = "poolisious";
-	private File pearPath = null;
-	private File installDir;
+    public static final String POOLISIOUS = "poolisious";
+    private File pearPath = null;
+    private File installDir;
 
-	private AnalysisEngine pearAsPipeline;
-	private boolean initSuccessful;
+    private AnalysisEngine pearAsPipeline;
+    private boolean initSuccessful;
 
+    public void setPearPath(String pearFilePath, String installDir) {
 
-	public void setPearPath(String pearFilePath, String installDir) {
+	this.pearPath = new File(pearFilePath);
+	this.installDir = new File(installDir);
+	this.initSuccessful = false;
 
-		this.pearPath = new File(pearFilePath);
-		this.installDir = new File(installDir);
-		this.initSuccessful = false;
+	this.setUpToRunNoCheckedExceptionShit();
 
-		this.setUpToRunNoCheckedExceptionShit();
+	PearHandler.log.info("Pipeline up and running");
+    }
 
-		PearHandler.log.info("Pipeline up and running");
+    public boolean isInitCompleted() {
+
+	return this.initSuccessful;
+    }
+
+    public void processCas(JCas cas) {
+
+	if (this.initSuccessful) {
+	    this.processCasInPipeline(cas);
+	} else {
+	    throw new RuntimeException("Cas is not initialized yet");
 	}
+    }
 
+    private void processCasInPipeline(JCas cas) {
 
-	public boolean isInitCompleted() {
-
-		return this.initSuccessful;
+	try {
+	    this.pearAsPipeline.process(cas);
+	} catch (AnalysisEngineProcessException e) {
+	    PearHandler.log.error("Could not process cas", e);
+	    throw new RuntimeException(e);
 	}
+    }
 
+    private void setUpToRunNoCheckedExceptionShit() {
 
-	public void processCas(JCas cas) {
-
-		if (this.initSuccessful) {
-			this.processCasInPipeline(cas);
-		} else {
-			throw new RuntimeException("Cas is not initialized yet");
-		}
+	try {
+	    this.setUpToRun();
+	} catch (Exception e) {
+	    PearHandler.log.error("Can not start the pear", e);
+	    throw new RuntimeException(e);
 	}
+    }
 
+    private void setUpToRun() throws Exception {
 
-	private void processCasInPipeline(JCas cas) {
+	String descriptorPath = this.installPear();
+	XMLInputSource xmlInputSource = new XMLInputSource(descriptorPath);
+	PearSpecifier parsePearSpecifier = UIMAFramework.getXMLParser().parsePearSpecifier(xmlInputSource);
+	AnalysisEngine pipeline = this.runDescriptor(parsePearSpecifier);
 
-		try {
-			this.pearAsPipeline.process(cas);
-		} catch (AnalysisEngineProcessException e) {
-			PearHandler.log.error("Could not process cas", e);
-			throw new RuntimeException(e);
-		}
-	}
+	this.pearAsPipeline = pipeline;
+	this.initSuccessful = true;
+    }
 
+    private String installPear() throws IOException {
 
-	private void setUpToRunNoCheckedExceptionShit() {
+	PackageBrowser installPackage = PackageInstaller.installPackage(this.installDir, this.pearPath, false);
+	return installPackage.getComponentPearDescPath();
 
-		try {
-			this.setUpToRun();
-		} catch (Exception e) {
-			PearHandler.log.error("Can not start the pear", e);
-			throw new RuntimeException(e);
-		}
-	}
+    }
 
+    private AnalysisEngine runDescriptor(ResourceSpecifier resourceSpecifier) throws ResourceInitializationException {
 
-	private void setUpToRun() throws Exception {
+	AnalysisEngine analysisEngine = UIMAFramework.produceAnalysisEngine(resourceSpecifier, null, null);
+	analysisEngine.getResourceManager().getCasManager().defineCasPool(PearHandler.POOLISIOUS, 2, new Properties());
+	return analysisEngine;
+    }
 
-		String descriptorPath = this.installPear();
-		XMLInputSource xmlInputSource = new XMLInputSource(descriptorPath);
-		PearSpecifier parsePearSpecifier = UIMAFramework.getXMLParser().parsePearSpecifier(xmlInputSource);
-		AnalysisEngine pipeline = this.runDescriptor(parsePearSpecifier);
+    public AnalysisEngine getAE() {
 
-		this.pearAsPipeline = pipeline;
-		this.initSuccessful = true;
-	}
-
-
-	private String installPear() throws IOException {
-
-		PackageBrowser installPackage = PackageInstaller.installPackage(this.installDir, this.pearPath, false);
-		return installPackage.getComponentPearDescPath();
-
-	}
-
-
-	private AnalysisEngine runDescriptor(ResourceSpecifier resourceSpecifier) throws ResourceInitializationException {
-
-		AnalysisEngine analysisEngine = UIMAFramework.produceAnalysisEngine(resourceSpecifier, null, null);
-		analysisEngine.getResourceManager().getCasManager().defineCasPool(PearHandler.POOLISIOUS, 2, new Properties());
-		return analysisEngine;
-	}
-
-
-	public AnalysisEngine getAE() {
-
-		return this.pearAsPipeline;
-	}
+	return this.pearAsPipeline;
+    }
 
 }
