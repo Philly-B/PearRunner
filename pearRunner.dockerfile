@@ -4,7 +4,7 @@ WORKDIR /
 
 RUN mkdir -p pearInstall pearDesc \
 	&& apt-get update \
-	&& apt-get install curl
+	&& apt-get install curl -y
 
 COPY *.pear pearDesc/pearToExecute.pear
 
